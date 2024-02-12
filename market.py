@@ -18,16 +18,19 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
 
     # SellerService implementations
     def RegisterSeller(self, request, context):
+        print(f"Seller join request from {request.address}, uuid = {request.uuid}")
+
         if request.address in self.sellers:
             print("ERROR: Seller already present")
             return market_pb2.RegisterSellerResponse(status=market_pb2.RegisterSellerResponse.FAILED)
 
         self.sellers[request.address] = request.uuid
-        print(f"Seller join request from {request.address}, uuid = {request.uuid}")
         return market_pb2.RegisterSellerResponse(status=market_pb2.RegisterSellerResponse.SUCCESS)
 
 
     def SellItem(self, request, context):
+        print(f"Sell Item request from {request.sellerAddress}")
+
         if request.sellerAddress not in self.sellers.keys():
             print("ERROR: Seller not registered")
             return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
@@ -36,23 +39,24 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
             return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
 
         # Add item to inventory
-        self.item_id = self.item_id + 1
-        seller_item = {
-            "productName": request.productName,
-            "category": request.category,
-            "quantity": request.quantity,
-            "description": request.description,
-            "sellerAddress": request.sellerAddress,
-            "pricePerUnit": request.pricePerUnit,
-            "rating": 0  # Placeholder for rating
-        }
+        # self.item_id = self.item_id + 1
+        # seller_item = {
+        #     "productName": request.productName,
+        #     "category": request.category,
+        #     "quantity": request.quantity,
+        #     "description": request.description,
+        #     "sellerAddress": request.sellerAddress,
+        #     "pricePerUnit": request.pricePerUnit,
+        #     "rating": 0  # Placeholder for rating
+        # }
         # A seller can not sell the same item twice        
-        self.items[self.item_id] = seller_item
-        print(f"Sell Item request from {request.sellerAddress}")
+        # self.items[self.item_id] = seller_item
         return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.SUCCESS, itemId=self.item_id, rating=0)
 
 
     def UpdateItem(self, request, context):
+        print(f"Update Item {request.itemId} request from {request.sellerAddress}")
+
         if (request.sellerAddress not in self.sellers.keys()):
             print("ERROR: Seller not registered")
             return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
@@ -75,12 +79,13 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
         # Update item details
         self.items[request.itemId]["pricePerUnit"] = request.newPrice
         self.items[request.itemId]["quantity"] = request.newQuantity
-        print(f"Update Item {request.itemId} request from {request.sellerAddress}")
         # self.notify_clients(f"Item ID: {request.itemId} has been updated.")
         return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.SUCCESS)
 
 
     def DeleteItem(self, request, context):
+        print(f"Delete Item {request.itemId} request from {request.sellerAddress}")
+
         if request.sellerAddress not in self.sellers.keys():
             print("ERROR: Seller not registered")
             return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
@@ -96,11 +101,12 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
         
         # Remove item from inventory
         del self.items[request.itemId]
-        print(f"Delete Item {request.itemId} request from {request.sellerAddress}")
         return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.SUCCESS)
 
 
     def DisplaySellerItems(self, request, context):
+        print(f"Display Items request from {request.sellerAddress}")
+
         if request.sellerAddress not in self.sellers.keys():
             print("ERROR: Seller not registered")
             return market_pb2.DisplaySellerItemsResponse()
@@ -121,12 +127,13 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
                 item.quantityRemaining = item_details["quantity"]
                 item.sellerAddress = item_details["sellerAddress"]
                 item.rating = item_details["rating"]
-        print(f"Display Items request from {request.sellerAddress}")
         return response
 
 
     # BuyerService implementations
     def SearchItem(self, request, context):
+        print(f"Search request for Item name: '{request.itemName}', Category: '{request.itemCategory}'")
+
         response = market_pb2.SearchItemResponse()
         for item_id, item_details in self.items.items():
 
@@ -144,7 +151,6 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
                     item.rating = item_details["rating"]
                     item.sellerAddress = item_details["sellerAddress"]
 
-        print(f"Search request for Item name: '{request.itemName}', Category: '{request.itemCategory}'")
 
         return response
 
@@ -185,12 +191,13 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
 
 
     def RateItem(self, request, context):
+        print(f"{request.buyerAddress} rated item {request.itemId} with {request.rating} stars.")
+
         if request.itemId not in self.items:
             return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.FAILED)
 
         # Update item rating
         self.items[request.itemId]["rating"] = request.rating
-        print(f"{request.buyerAddress} rated item {request.itemId} with {request.rating} stars.")
         return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.SUCCESS)
 
     # NotifyClient implementation
@@ -210,8 +217,6 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     market_pb2_grpc.add_SellerServiceServicer_to_server(MarketServicer(), server)
-    # market_pb2_grpc.add_BuyerServiceServicer_to_server(MarketServicer(), server)
-    # market_pb2_grpc.add_NotifyClientServicer_to_server(MarketServicer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     try:
