@@ -57,6 +57,13 @@ class MarketBuyer:
 
 
     def rate_item(self, item_id, buyer_address, rating):
+        if rating < 1 or rating > 5:
+            print("Rating should be between 1 and 5")
+            return
+        elif type(rating) != int:
+            print("Rating should be an integer")
+            return
+        
         request = market_pb2.RateItemRequest(
             itemId=item_id,
             buyerAddress=buyer_address,
@@ -72,6 +79,7 @@ class MarketBuyer:
 if __name__ == "__main__":
     buyer = MarketBuyer('localhost:50051')
     # buyer.search_item(item_name="Orange", item_category="ANY")
-    # buyer.buy_item(item_id=1, quantity=5, buyer_address="192.13.91.188:5051")
-    # buyer.add_to_wishlist(1, "192.13.91.188:5051")
-    buyer.rate_item(1, "193.13.91.1:50051", 4)
+    buyer.rate_item(1, "142.213.91.1:50051", 1)
+    buyer.search_item(item_name="Orange", item_category="ANY")
+    buyer.buy_item(item_id=1, quantity=5, buyer_address="142.213.91.1:50051")
+    buyer.add_to_wishlist(1, "142.213.91.1:50051")

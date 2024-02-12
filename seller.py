@@ -164,7 +164,7 @@ if __name__ == "__main__":
     credentials = {}
     while True:
         # choice = mainMenu()
-        choice = 5
+        choice = 1
         if choice == 1:
             address, uuid_seller = seller.getRandomAddress(port)
             # seller_name = input("Enter seller name: ")
@@ -214,11 +214,11 @@ if __name__ == "__main__":
             choice = 5
 
         if choice == 5:
-            # cred_address, cred_uuid = get_seller_info(credentials)
-            cred_address = '192.13.216.86:5051'
-            cred_uuid = 'fa01f6bc-c9fd-11ee-bca1-902e16f01b50'
-            # cred_address = '192.13.113.161:5051'
-            # cred_uuid = 'e2fe5216-c9f7-11ee-98e4-902e16f01b50'
+            cred_address, cred_uuid = get_seller_info(credentials)
+            # cred_address = '192.13.221.80:5051'
+            # cred_uuid = '3e226659-c9ff-11ee-91d6-902e16f01b50'
+            # cred_address = '192.13.216.90:5051'
+            # cred_uuid = '18c4e9e8-c9ff-11ee-9c6f-902e16f01b50'
             # cred_address = '192.13.116.44:5051'
             # cred_uuid = 'e3dd4a19-c9f7-11ee-ba4d-902e16f01b50'
             seller.display_seller_items(cred_address, cred_uuid)

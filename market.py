@@ -289,8 +289,7 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
             if self.items[key]["rating"] == 0:
                 self.items[key]["rating"] = request.rating
             else:
-                self.items[key]["rating"] = (self.items[key]["rating"] + request.rating) // 2
-            break
+                self.items[key]["rating"] = (self.items[key]["rating"] + request.rating) / 2
 
         return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.SUCCESS)
 
