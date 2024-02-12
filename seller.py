@@ -164,7 +164,7 @@ if __name__ == "__main__":
     credentials = {}
     while True:
         # choice = mainMenu()
-        choice = 1
+        choice = 5
         if choice == 1:
             address, uuid_seller = seller.getRandomAddress(port)
             # seller_name = input("Enter seller name: ")
@@ -186,29 +186,41 @@ if __name__ == "__main__":
             # description = input("Enter description: ")
             # price_per_unit = int(input("Enter price per unit: "))
             product_name = "Orange Frooti"
-            category = "ELECTRONICS"
+            category = "OTHERS"
             quantity = 500
             description = "This is Frooti, a mongo drink"
             price_per_unit = 20
             seller.sell_item(product_name, category, quantity, description, cred_address, price_per_unit, cred_uuid)
-            choice = 5
+            choice = 3
 
         if choice == 3:
             cred_address, cred_uuid = get_seller_info(credentials)
-            item_id = int(input("Enter item ID: "))
-            new_price = int(input("Enter new price: "))
-            new_quantity = int(input("Enter new quantity: "))
+            # cred_address = '192.13.79.14:5051'
+            # cred_uuid = 'a4d12ce9-c9f4-11ee-b059-902e16f01b50'
+            # item_id = int(input("Enter item ID: "))
+            # new_price = int(input("Enter new price: "))
+            # new_quantity = int(input("Enter new quantity: "))
+            item_id = 1
+            new_price = 29
+            new_quantity = 99
             seller.update_item(item_id, new_price, new_quantity, cred_address, cred_uuid)
+            choice = 5
 
         if choice == 4:
             cred_address, cred_uuid = get_seller_info(credentials)
-            item_id = int(input("Enter item ID: "))
+            # item_id = int(input("Enter item ID: "))
+            item_id = 1
             seller.delete_item(item_id, cred_address, cred_uuid)
+            choice = 5
 
         if choice == 5:
-            cred_address, cred_uuid = get_seller_info(credentials)
-            # cred_address = '192.13.91.188:5051'
-            # cred_uuid = 'ed6dabf1-c8dd-11ee-a369-902e16f01b50'
+            # cred_address, cred_uuid = get_seller_info(credentials)
+            # cred_address = '192.13.170.239:5051'
+            # cred_uuid = 'b0ae1499-c9f7-11ee-bbb1-902e16f01b50'
+            # cred_address = '192.13.113.161:5051'
+            # cred_uuid = 'e2fe5216-c9f7-11ee-98e4-902e16f01b50'
+            cred_address = '192.13.116.44:5051'
+            cred_uuid = 'e3dd4a19-c9f7-11ee-ba4d-902e16f01b50'
             seller.display_seller_items(cred_address, cred_uuid)
             choice = 6
 

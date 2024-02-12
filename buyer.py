@@ -15,7 +15,7 @@ class MarketBuyer:
             itemCategory=item_category
         )
         response = self.stub.SearchItem(request)
-        print(f"Search request for Item name: '{item_name}', Category: '{item_category}'")
+        # print(f"Search request for Item name: '{item_name}', Category: '{item_category}'")
         category = {0 : "ELECTRONICS", 1 : "FASHION", 2: "OTHERS"}
         # print(item.category)
         for item in response.items:
@@ -71,7 +71,7 @@ class MarketBuyer:
 
 if __name__ == "__main__":
     buyer = MarketBuyer('localhost:50051')
-    # buyer.search_item(item_name="Frooti", item_category="ANY")
-    # buyer.buy_item(item_id=1, quantity=1, buyer_address="192.13.91.188:5051")
-    buyer.add_to_wishlist(3, "192.13.91.188:5051")
+    # buyer.search_item(item_name="Orange", item_category="ANY")
+    buyer.buy_item(item_id=1, quantity=5, buyer_address="192.13.91.188:5051")
+    # buyer.add_to_wishlist(3, "192.13.91.188:5051")
     # buyer.rate_item(3, "120.13.188.178:50051", 4)

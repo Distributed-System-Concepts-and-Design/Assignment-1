@@ -4,4 +4,4 @@ Command to generate the GRPC boiler plate code from .proto files: python -m grpc
 
 ## GRPC Online SHopping Platform Assumptions:
 1) ProductName+Category is unique for each product
-2) '#' does not come in prdouctName or category
+2) '#' and '$' does not come in prdouctName or category
