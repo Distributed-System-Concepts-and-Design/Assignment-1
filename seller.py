@@ -215,12 +215,12 @@ if __name__ == "__main__":
 
         if choice == 5:
             # cred_address, cred_uuid = get_seller_info(credentials)
-            # cred_address = '192.13.170.239:5051'
-            # cred_uuid = 'b0ae1499-c9f7-11ee-bbb1-902e16f01b50'
+            cred_address = '192.13.216.86:5051'
+            cred_uuid = 'fa01f6bc-c9fd-11ee-bca1-902e16f01b50'
             # cred_address = '192.13.113.161:5051'
             # cred_uuid = 'e2fe5216-c9f7-11ee-98e4-902e16f01b50'
-            cred_address = '192.13.116.44:5051'
-            cred_uuid = 'e3dd4a19-c9f7-11ee-ba4d-902e16f01b50'
+            # cred_address = '192.13.116.44:5051'
+            # cred_uuid = 'e3dd4a19-c9f7-11ee-ba4d-902e16f01b50'
             seller.display_seller_items(cred_address, cred_uuid)
             choice = 6
 

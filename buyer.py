@@ -72,6 +72,6 @@ class MarketBuyer:
 if __name__ == "__main__":
     buyer = MarketBuyer('localhost:50051')
     # buyer.search_item(item_name="Orange", item_category="ANY")
-    buyer.buy_item(item_id=1, quantity=5, buyer_address="192.13.91.188:5051")
-    # buyer.add_to_wishlist(3, "192.13.91.188:5051")
-    # buyer.rate_item(3, "120.13.188.178:50051", 4)
+    # buyer.buy_item(item_id=1, quantity=5, buyer_address="192.13.91.188:5051")
+    # buyer.add_to_wishlist(1, "192.13.91.188:5051")
+    buyer.rate_item(1, "193.13.91.1:50051", 4)

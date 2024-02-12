@@ -68,7 +68,6 @@ message SellItemResponse {
   }
   Status status = 1;
   uint32 itemId = 2;
-  int32 rating = 3;
 }
 
 message UpdateItemRequest {
@@ -120,7 +119,7 @@ message DisplaySellerItemsResponse {
     string description = 5;
     uint32 quantityRemaining = 6;
     string sellerAddress = 7; // IP:Port of the seller
-    int32 rating = 8;
+    float rating = 8;
   }
   repeated ItemDetails items = 1;
 }
@@ -172,7 +171,7 @@ message SearchItemResponse {
     string description = 5;
     uint32 quantityRemaining = 6;
     string sellerAddress = 7; // IP:Port of the seller
-    int32 rating = 8;
+    float rating = 8;
   }
   repeated ItemDetails items = 1;
 }
@@ -207,7 +206,8 @@ message AddToWishListResponse {
 message RateItemRequest {
   uint32 itemId = 1;
   string buyerAddress = 2; // IP:Port of the buyer
-  int32 rating = 3;
+  // Rating is an integer between 1 and 5
+  uint32 rating = 3;
 }
 
 message RateItemResponse {

@@ -14,6 +14,7 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
         self.sellers = {}  # Placeholder for registered sellers
         self.item_id = 0
         self.wishlist = {} # Placeholder for wishlist data
+        self.buyerRating = {} # Placeholder for buyer ratings
         self.categoryEnum = {0: "ELECTRONICS", 1: "FASHION", 2: "OTHERS", 3: "ANY"}
 
 
@@ -67,7 +68,7 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
             "pricePerUnit": request.pricePerUnit,
             "rating": 0  # Placeholder for rating
         }
-        return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.SUCCESS, itemId=itemID, rating=0)
+        return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.SUCCESS, itemId=itemID)
 
 
     def UpdateItem(self, request, context):
@@ -240,13 +241,18 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
     def AddToWishList(self, request, context):
         print(f"Wishlist request of item {request.itemId}, from {request.buyerAddress}")
 
-        if request.itemId not in self.items:
+        all_itemIDs = {value["itemID"] : True for value in self.items.values()}
+        if request.itemId not in all_itemIDs.keys():
             print(f"ERROR: Item {request.itemId} not found")
             return market_pb2.AddToWishListResponse(status=market_pb2.AddToWishListResponse.FAILED)
         
         # Add item to wishlist
         if request.buyerAddress in self.wishlist:
-            self.wishlist[request.buyerAddress].append(request.itemId)
+            if request.itemId not in self.wishlist[request.buyerAddress]:
+                self.wishlist[request.buyerAddress].append(request.itemId)
+            else:
+                print(f"ERROR: Item {request.itemId} already present in wishlist for buyer {request.buyerAddress}")
+                return market_pb2.AddToWishListResponse(status=market_pb2.AddToWishListResponse.FAILED)
         else:
             self.wishlist[request.buyerAddress] = [request.itemId]
 
@@ -255,12 +261,37 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
 
     def RateItem(self, request, context):
         print(f"{request.buyerAddress} rated item {request.itemId} with {request.rating} stars.")
-
-        if request.itemId not in self.items:
+        
+        # make a reverse lookup dictionary for itemID, key
+        itemID_to_key = {}
+        for key, value in self.items.items():
+            if value["itemID"] in itemID_to_key:
+                itemID_to_key[value["itemID"]].append(key)
+            else:
+                itemID_to_key[value["itemID"]] = [key]
+        
+        if request.itemId not in itemID_to_key.keys():
+            print(f"ERROR: Item {request.itemId} not found")
             return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.FAILED)
+        
+        # buyerRating is of the form {buyerAddress : [itemID1, itemID2, ...]}
+        if request.buyerAddress in self.buyerRating:
+            if request.itemId in self.buyerRating[request.buyerAddress]:
+                print(f"ERROR: Buyer {request.buyerAddress} already rated item {request.itemId}")
+                return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.FAILED)
+            else:
+                self.buyerRating[request.buyerAddress].append(request.itemId)
+        else:
+            self.buyerRating[request.buyerAddress] = [request.itemId]
 
         # Update item rating
-        self.items[request.itemId]["rating"] = request.rating
+        for key in itemID_to_key[request.itemId]:
+            if self.items[key]["rating"] == 0:
+                self.items[key]["rating"] = request.rating
+            else:
+                self.items[key]["rating"] = (self.items[key]["rating"] + request.rating) // 2
+            break
+
         return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.SUCCESS)
 
     # NotifyClient implementation
