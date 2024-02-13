@@ -13,23 +13,24 @@ class UserClient:
         self.groups[group_name] = socket
 
     def __get_grp_lists(self):
+        msg_srvr_ip = "localhost:5555"
         context_msg_Server = zmq.Context()
         msg_srvr_sckt = context_msg_Server.socket(zmq.REQ)
-        msg_srvr_sckt.connect("tcp://localhost:5555")  # Connect to message server
+        msg_srvr_sckt.connect(f'tcp://{msg_srvr_ip}')  # Connect to message server
         msg_srvr_sckt.send_string(f'GET_GROUP_LIST {self.uuid}')
         group_list = msg_srvr_sckt.recv_string()
-        msg_srvr_sckt.disconnect("tcp://localhost:5555")
+        msg_srvr_sckt.disconnect(f'tcp://{msg_srvr_ip}')
         msg_srvr_sckt.close()
         return group_list
 
     def join_group(self):
         group_list = self.__get_grp_lists().split("\n")
 
-        print("Available groups:")
+        print("Available Active groups:")
         # Print the list of available groups with index
         for i, group in enumerate(group_list):
             print(f"{i + 1}. {group}")
-        group_no = input("Enter the group number to join: ").strip()
+        group_no = input("Enter the group index number to join: ").strip()
         group_name = group_list[int(group_no) - 1].split(" - ")[0]
         group_ip_ = group_list[int(group_no) - 1].split(" - ")[1].split(":")
         if group_ip_[0] == "*":
@@ -40,20 +41,21 @@ class UserClient:
             print("You are already part of this group")
             return
         
-        print(f"Joining group {group_name} - {group_ip}...")
+        # print(f"Joining group {group_name} - {group_ip}...")
 
         # Creating a new connection to the group server
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.connect(f"tcp://{group_ip}")  # Connect to group server
 
-        print(f'Socket connected to ip: {group_ip}')
+        # print(f'Socket connected to ip: {group_ip}')
         
         message = f"JOIN_GROUP {self.uuid}"
-        print('Sending message: ', message)
+        # print('Sending message: ', message)
         socket.send_string(message)
-        print('Message sent')
+        # print('Message sent')
         response = socket.recv_string()
+        
         if response == "SUCCESS":
             self.groups[group_name] = socket
         return response
@@ -121,8 +123,8 @@ def main():
         while True:
             # User interaction loop
             print('\n----------------------------------------------------------------')
-            print("Available commands: JOIN, LEAVE, GET_MESSAGES, SEND_MESSAGE, EXIT")
-            print('Available groups: \n', user_client.get_joined_groups())
+            print("Available commands: JOIN, LEAVE, GET_MESSAGES, SEND_MESSAGE, EXIT") # Command example: COMMAND <args> @group_name
+            print('Joined groups: \n', user_client.get_joined_groups())
             command = input("Enter command: ").strip()
 
             if command.startswith("JOIN"): 
