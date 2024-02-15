@@ -32,47 +32,58 @@ def main():
     temp_inpt = input("Enter the IP address of the message server (default: localhost:5555): ")
     if temp_inpt:
         group_server_ip = temp_inpt
+    try:
 
-    context = zmq.Context()
-    socket = context.socket(zmq.REP)
-    socket.bind(f"tcp://{group_server_ip}")
+        context = zmq.Context()
+        socket = context.socket(zmq.REP)
+        socket.bind(f"tcp://{group_server_ip}")
 
-    message_server = MessageServer()
+        message_server = MessageServer()
 
-    print(f'Message server started at {group_server_ip}')
+        print(f'Message server started at {group_server_ip}')
 
-    while True:
-        # Wait for incoming connections
-        message = socket.recv_string()
+        while True:
+            # Wait for incoming connections
+            message = socket.recv_string()
 
-        # Parse the message
-        command, *args = message.split()
+            # Parse the message
+            command, *args = message.split()
 
-        if command == "REGISTER_GROUP":
-            # Register a new group
-            ip_address, *group_name_ = args
-            group_name = " ".join(group_name_)
-            response = message_server.register_group(group_name, ip_address)
-            print(f"JOIN REQUEST FROM {group_name} - [{ip_address}]")
-            socket.send_string(response)
+            if command == "REGISTER_GROUP":
+                # Register a new group
+                ip_address, *group_name_ = args
+                group_name = " ".join(group_name_)
+                response = message_server.register_group(group_name, ip_address)
+                print(f"JOIN REQUEST FROM {group_name} - [{ip_address}]")
+                socket.send_string(response)
 
-        elif command == "GET_GROUP_LIST":
-            # Get the list of available groups
-            response = message_server.get_group_list()
-            print(f"GET GROUP LIST REQUEST FROM {args[0]}")
-            socket.send_string(response)
-        
-        elif command == "DELETE_GROUP":
-            # Delete a group
-            ip_address, *group_name_ = args
-            group_name = " ".join(group_name_)
-            response = message_server.delete_group(group_name, ip_address)
-            print(f"DELETE GROUP REQUEST FROM {group_name} - [{ip_address}]")
-            socket.send_string(response)
+            elif command == "GET_GROUP_LIST":
+                # Get the list of available groups
+                response = message_server.get_group_list()
+                print(f"GET GROUP LIST REQUEST FROM {args[0]}")
+                socket.send_string(response)
+            
+            elif command == "DELETE_GROUP":
+                # Delete a group
+                ip_address, *group_name_ = args
+                group_name = " ".join(group_name_)
+                response = message_server.delete_group(group_name, ip_address)
+                print(f"DELETE GROUP REQUEST FROM {group_name} - [{ip_address}]")
+                socket.send_string(response)
 
-        else:
-            # Invalid command
-            socket.send_string("INVALID COMMAND")
+            else:
+                # Invalid command
+                socket.send_string("INVALID COMMAND")
+    except KeyboardInterrupt:
+        print("Message server closed")
+        context.destroy()
+    except Exception as e:
+        print(f'Error: {e}')
+        context.destroy()
+        print("Message server closed")
+    finally:
+        if socket:
+            socket.close()
 
 if __name__ == "__main__":
     main()

@@ -3,33 +3,28 @@ import threading
 from datetime import datetime
 
 class GroupServer:
-    def __init__(self, group_name, ip_address_):
+    def __init__(self, group_name, external_ip, port):
         self.group_name = group_name
-        ip_parts = ip_address_.split(":")
-        print(ip_parts)
-        if len(ip_parts) == 2:
-            self.ip_address = ip_address_
-        else:
-            self.ip_address = f"*:{ip_address_}"
         self.users = set()  # Set to store users currently part of the group
         self.messages = []  # List to store messages sent by users
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
-        print('Binding to ip: ', f"tcp://{self.ip_address}")
-        self.socket.bind(f"tcp://{self.ip_address}")
-        self.external_ip = "34.131.65.103" + ":" + ip_parts[1]
+        self.ip_address = f"{external_ip}:{port}"
+        self.external_ip = external_ip
+        print(f"Binding to {external_ip}:{port}")
+        self.socket.bind(f"tcp://*:{port}")  # Bind to the specified port
 
         self.register_group_with_message_server()
         print(f"Group {group_name} started at {self.ip_address}")
 
     def register_group_with_message_server(self):
         # message_server_ip = "localhost:5555"
-        message_server_ip = "34.131.124.126:5555"  # External IP of the message server from Google Cloud
+        message_server_ip = "34.131.27.141:5555"  # External IP of the message server from Google Cloud
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
             message_server_socket.connect(f'tcp://{message_server_ip}')  # Connect to message server
-            message_server_socket.send_string(f"REGISTER_GROUP {self.external_ip} {self.group_name}")
+            message_server_socket.send_string(f"REGISTER_GROUP {self.ip_address} {self.group_name}")
             response = message_server_socket.recv_string()
             print(response)
         finally:
@@ -146,13 +141,12 @@ class GroupServer:
 
 def main():
     group_name = input("Enter group name: ")
-    group_ip = input("Enter group IP {Press Enter for localhost}: ")
-    if not group_ip:
-        group_ip = "*"
+    external_ip = input("Enter your external IP {Press Enter for Local Host}: ")
+    if not external_ip:
+        external_ip = "localhost"
     group_port = input("Enter group port to bind: ")
     
-    group_ip = f"{group_ip}:{group_port}"
-    group_server = GroupServer(group_name, group_ip)
+    group_server = GroupServer(group_name, external_ip, group_port)
 
     try:
         while True:

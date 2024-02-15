@@ -13,7 +13,7 @@ class UserClient:
         self.groups[group_name] = socket
 
     def __get_grp_lists(self):
-        msg_srvr_ip = "34.131.124.126:5555"
+        msg_srvr_ip = "34.131.27.141:5555"
         context_msg_Server = zmq.Context()
         msg_srvr_sckt = context_msg_Server.socket(zmq.REQ)
         msg_srvr_sckt.connect(f'tcp://{msg_srvr_ip}')  # Connect to message server
@@ -115,11 +115,10 @@ def main():
     user_name = input("Enter your name: ")
     user_phone = input("Enter your phone number: ") # This will be the user's unique identifier
 
-    user_client = UserClient(user_name, user_phone)
-
-    print(f'Welcome {user_name}! Your phone number is {user_phone}')
-
     try:
+        user_client = UserClient(user_name, user_phone)
+
+        print(f'Welcome {user_name}! Your phone number is {user_phone}')
         while True:
             # User interaction loop
             print('\n----------------------------------------------------------------')
