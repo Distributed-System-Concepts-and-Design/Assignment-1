@@ -262,12 +262,14 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
         for key in itemID_to_key[request.itemId]:
             if self.items[key]["quantity"] >= request.quantity:
                 self.items[key]["quantity"] -= request.quantity
+                self.notifySeller(self.items[key]["sellerAddress"], self.items[key])
                 break
             else:
                 request.quantity -= self.items[key]["quantity"]
                 self.items[key]["quantity"] = 0
+                self.notifySeller(self.items[key]["sellerAddress"], self.items[key])
         
-        # self.notify_seller(request.itemId, request.buyerAddress)
+        # self.notifySeller(self.items[key]["sellerAddress"], self.items[key])
         return market_pb2.BuyItemResponse(status=market_pb2.BuyItemResponse.SUCCESS)
 
 

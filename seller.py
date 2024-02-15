@@ -96,19 +96,19 @@ class MarketSeller:
 
 class SellerNotificationServicer(notifySeller_pb2_grpc.SellerNotificationServicer):
     def NotifySeller(self, request, context):
-
+        print("\n------------------------------------------------")
         print("Received notification from market:")
         print("#######")
-        print("The Following Item has been updated:")
-        print(f"Item ID: {request.item_id}")
+        print("Buyer has bought the following item. Its updated details are -:")
+        print(f"Item ID: {request.itemId}")
         print(f"Price: ${request.price}")
-        print(f"Name: {request.product_name}")
+        print(f"Name: {request.productName}")
         print(f"Category: {request.category}")
         print(f"Description: {request.description}")
-        print(f"Quantity Remaining: {request.quantity_remaining}")
+        print(f"Quantity Remaining: {request.quantityRemaining}")
         print(f"Rating: {request.rating}")
-        print(f"Seller: {request.seller_address}")
-        print("---------------------------------------------")
+        print(f"Seller: {request.sellerAddress}")
+        print("--------------------------------------------------")
 
         return notifySeller_pb2.NotifySellerResponse(status=notifySeller_pb2.NotifySellerResponse.SUCCESS)
 
@@ -138,6 +138,9 @@ if __name__ == "__main__":
     
     # Connecting to the market as a client
     seller = MarketSeller('localhost:'+SELLER_MARKET_PORT)
+    sellerAddress = None
+    sellerUUID = None
+    SELLER_NOTIFICATION_PORT = '50052'
 
 
     print("-------------------------------------------------")
@@ -197,7 +200,6 @@ if __name__ == "__main__":
             else:
                 print("Invalid choice")
         
-            print("--------------------------------------------------")
             print("--------------------Main Menu---------------------")
             print("--------------------------------------------------")
         except Exception as e:
