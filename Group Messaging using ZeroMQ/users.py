@@ -13,7 +13,7 @@ class UserClient:
         self.groups[group_name] = socket
 
     def __get_grp_lists(self):
-        msg_srvr_ip = "localhost:5555"
+        msg_srvr_ip = "34.131.124.126:5555"
         context_msg_Server = zmq.Context()
         msg_srvr_sckt = context_msg_Server.socket(zmq.REQ)
         msg_srvr_sckt.connect(f'tcp://{msg_srvr_ip}')  # Connect to message server

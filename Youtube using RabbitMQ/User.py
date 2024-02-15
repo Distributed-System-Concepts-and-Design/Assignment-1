@@ -5,7 +5,7 @@ import time
 class User:
     def __init__(self, username):
         self.username = username
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters('34.131.65.103'))        
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='user_actions')
         self.userNotifications = {} # {user: queue, ...}
@@ -37,7 +37,7 @@ class User:
             print(f'Total time wasted in procrastination: {end_time - start_time} seconds. Get back to work!')
 
 if __name__ == '__main__':
-    print(len(sys.argv))
+    # print(len(sys.argv))
     if len(sys.argv) == 2:
         user = User(sys.argv[1])
         action = 'login'

@@ -17,17 +17,19 @@ class GroupServer:
         self.socket = self.context.socket(zmq.REP)
         print('Binding to ip: ', f"tcp://{self.ip_address}")
         self.socket.bind(f"tcp://{self.ip_address}")
+        self.external_ip = "34.131.65.103" + ":" + ip_parts[1]
 
         self.register_group_with_message_server()
         print(f"Group {group_name} started at {self.ip_address}")
 
     def register_group_with_message_server(self):
-        message_server_ip = "localhost:5555"
+        # message_server_ip = "localhost:5555"
+        message_server_ip = "34.131.124.126:5555"  # External IP of the message server from Google Cloud
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
             message_server_socket.connect(f'tcp://{message_server_ip}')  # Connect to message server
-            message_server_socket.send_string(f"REGISTER_GROUP {self.ip_address} {self.group_name}")
+            message_server_socket.send_string(f"REGISTER_GROUP {self.external_ip} {self.group_name}")
             response = message_server_socket.recv_string()
             print(response)
         finally:
@@ -36,7 +38,8 @@ class GroupServer:
                 message_server_socket.close()
 
     def close_group(self):
-        message_server_ip = "localhost:5555"
+        # message_server_ip = "localhost:5555"
+        message_server_ip = "34.131.124.126:5555"  # External IP of the message server from Google Cloud
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
@@ -147,6 +150,7 @@ def main():
     if not group_ip:
         group_ip = "*"
     group_port = input("Enter group port to bind: ")
+    
     group_ip = f"{group_ip}:{group_port}"
     group_server = GroupServer(group_name, group_ip)
 
