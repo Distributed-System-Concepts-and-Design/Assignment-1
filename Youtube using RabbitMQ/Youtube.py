@@ -3,7 +3,7 @@ import sys
 
 class Youtuber:
     def __init__(self):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters('34.131.65.103'))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='publish_commands')
         
