@@ -3,18 +3,20 @@ from concurrent import futures
 import time
 import market_pb2
 import market_pb2_grpc
+import notifyBuyer_pb2
+import notifyBuyer_pb2_grpc
+import notifySeller_pb2
+import notifySeller_pb2_grpc
 
 _ONE_DAY_IN_SECONDS = 24 * 60 * 60
 
-class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.NotifyClientServicer):
-
+class MarketServicer(market_pb2_grpc.SellerServiceServicer):
     def __init__(self):
-        # Initialize data structures or any other necessary setup
-        self.items = {}  # Placeholder for item data
-        self.sellers = {}  # Placeholder for registered sellers
+        self.items = {}         # Placeholder for item data
+        self.sellers = {}       # Placeholder for registered sellers
         self.item_id = 0
-        self.wishlist = {} # Placeholder for wishlist data
-        self.buyerRating = {} # Placeholder for buyer ratings
+        self.wishlist = {}      # wishlist = {buyerAddress : [itemID1, itemID2, ...]}
+        self.buyerRating = {}
         self.categoryEnum = {0: "ELECTRONICS", 1: "FASHION", 2: "OTHERS", 3: "ANY"}
 
 
@@ -40,6 +42,26 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
             print("ERROR: Seller UUID does not match")
             return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
 
+        
+        # # Add item to inventory
+        # self.item_id = self.item_id + 1
+        # seller_item = {
+        #     "productName": request.productName,
+        #     "category": request.category,
+        #     "quantity": request.quantity,
+        #     "description": request.description,
+        #     "sellerAddress": request.sellerAddress,
+        #     "pricePerUnit": request.pricePerUnit,
+        #     "rating": 0  # Placeholder for rating
+        # }
+        # # A seller can not sell the same item twice
+        # if self.item_id in self.items:
+        #     print(f"ERROR: Item already present with seller {request.sellerAddress}")
+        #     return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
+        # else:
+        #     self.items[self.item_id] = seller_item
+
+        
         # make the key as prod_unique_id$sellerAddress
         prod_unique_id = request.productName + "#" + str(request.category)
         key = prod_unique_id + "$" + request.sellerAddress
@@ -68,7 +90,8 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
             "pricePerUnit": request.pricePerUnit,
             "rating": 0  # Placeholder for rating
         }
-        return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.SUCCESS, itemId=itemID)
+        
+        return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.SUCCESS, itemId=self.item_id)
 
 
     def UpdateItem(self, request, context):
@@ -108,14 +131,24 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
             return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
         
         # iterate over reverse lookup dictionary and update the item details
+        product = {}
         for key in itemID_to_key[request.itemId]:
             # find the right key and update the details
             currentSeller = key.split('$')[1]
             if currentSeller == request.sellerAddress:
                 self.items[key]["pricePerUnit"] = request.newPrice
                 self.items[key]["quantity"] = request.newQuantity
+                product = self.items[key]
                 break
-        # self.notify_clients(f"Item ID: {request.itemId} has been updated.")
+        
+        
+        # Get the buyerAddress from wishlist who has this product and notify them
+        for buyerAddress, wishlist in self.wishlist.items():
+            if request.itemId in wishlist:
+                print(f"Buyer {buyerAddress} has {wishlist} in wishlist")
+                self.notifyBuyer(buyerAddress, product)  
+
+
         return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.SUCCESS)
 
 
@@ -292,19 +325,54 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer): # market_pb2_grpc.N
                 self.items[key]["rating"] = (self.items[key]["rating"] + request.rating) / 2
 
         return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.SUCCESS)
+    
 
-    # NotifyClient implementation
-    # def SendNotification(self, request, context):
-    #     print("#######")
-    #     print("The Following Item has been updated:")
-    #     print(request.updatedItemDetails)
-    #     print("#######")
-    #     return market_pb2.NotificationResponse(status=market_pb2.NotificationResponse.SUCCESS)
+    # NotifyClient implementations
+    def notifyBuyer(self, buyerAddress, request):
+        channel = grpc.insecure_channel(buyerAddress)
+        stub = notifyBuyer_pb2_grpc.BuyerNotificationStub(channel)
 
-    # def notify_clients(self, updated_item_details):
-    #     # Notify all clients about the item update
-    #     for seller_address in self.sellers.keys():
-    #         self.SendNotification(market_pb2.NotificationRequest(updatedItemDetails=updated_item_details), None)
+        # print(f"Notification request to buyer {buyerAddress}")
+        notification_request = notifyBuyer_pb2.NotifyBuyerRequest(
+            itemId=request['itemID'],
+            productName=request['productName'],
+            category=request['category'],
+            description=request['description'],
+            quantityRemaining=request['quantity'],
+            sellerAddress=request['sellerAddress'],
+            price=request['pricePerUnit'],
+            rating=request['rating']
+        )
+        # print(f"Notification response message prepared for buyer {buyerAddress}")
+        response = stub.NotifyBuyer(notification_request)
+        if response.status == notifyBuyer_pb2.NotifyBuyerResponse.SUCCESS:
+            print(f"Notification sent to buyer {buyerAddress}")
+        else:
+            print(f"ERROR: Notification failed to send to buyer {buyerAddress}")
+    
+    
+    # notify seller
+    def notifySeller(self, sellerAddress, request):
+        channel = grpc.insecure_channel(sellerAddress)
+        stub = notifySeller_pb2_grpc.SellerNotificationStub(channel)
+
+        # print(f"Notification request to seller {sellerAddress}")
+        notification_request = notifySeller_pb2.NotifySellerRequest(
+            itemId=request['itemID'],
+            productName=request['productName'],
+            category=request['category'],
+            description=request['description'],
+            quantityRemaining=request['quantity'],
+            sellerAddress=request['sellerAddress'],
+            price=request['pricePerUnit'],
+            rating=request['rating']
+        )
+        # print(f"Notification response message prepared for seller {sellerAddress}")
+        response = stub.NotifySeller(notification_request)
+        if response.status == notifySeller_pb2.NotifySellerResponse.SUCCESS:
+            print(f"Notification sent to seller {sellerAddress}")
+        else:
+            print(f"Notification failed to send to seller {sellerAddress}")
 
 
 def serve():

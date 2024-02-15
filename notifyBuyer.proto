@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+message NotifyBuyerRequest {
+    enum Category {
+        ELECTRONICS = 0;
+        FASHION = 1;
+        OTHERS = 2;
+    }
+    uint32 itemId = 1;
+    double price = 2;
+    string productName = 3;
+    Category category = 4;
+    string description = 5;
+    uint32 quantityRemaining = 6;
+    string sellerAddress = 7; // IP:Port of the seller
+    float rating = 8;
+}
+
+message NotifyBuyerResponse {
+    enum Status {
+        SUCCESS = 0;
+        FAILED = 1;
+    }
+    Status status = 1;
+}
+
+
+service BuyerNotification {
+  // Method for market to send notification to the buyer
+  rpc NotifyBuyer(NotifyBuyerRequest) returns (NotifyBuyerResponse);
+}

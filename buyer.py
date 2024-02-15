@@ -1,6 +1,9 @@
 import grpc
 import market_pb2
 import market_pb2_grpc
+import notifyBuyer_pb2
+import notifyBuyer_pb2_grpc
+from concurrent import futures
 
 
 class MarketBuyer:
@@ -76,10 +79,88 @@ class MarketBuyer:
             print("FAIL")
 
 
+class BuyerNotificationServicer(notifyBuyer_pb2_grpc.BuyerNotificationServicer):
+    def NotifyBuyer(self, request, context):
+        print("\nNOTIFICATION RECEIVED FROM THE MARKET -")
+        print("#######")
+        print("The Following Item has been updated:")
+        print(f"Item ID: {request.itemId}")
+        print(f"Price: ${request.price}")
+        print(f"Name: {request.productName}")
+        print(f"Category: {request.category}")
+        print(f"Description: {request.description}")
+        print(f"Quantity Remaining: {request.quantityRemaining}")
+        print(f"Rating: {request.rating}")
+        print(f"Seller: {request.sellerAddress}")
+        print("------------------------------------------\n")
+
+        return notifyBuyer_pb2.NotifyBuyerResponse(status=notifyBuyer_pb2.NotifyBuyerResponse.SUCCESS)
+
+
+def mainMenu():
+    print("\n1. Search Item")
+    print("2. Rate Item")
+    print("3. Buy Item")
+    print("4. Add to Wishlist")
+    print("5. Exit")
+    print("-------------------------------------------------")
+    choice = int(input("Enter your choice: "))
+    print("-------------------------------------------------\n")
+    return choice
+
+
+
 if __name__ == "__main__":
-    buyer = MarketBuyer('localhost:50051')
-    # buyer.search_item(item_name="Orange", item_category="ANY")
-    buyer.rate_item(1, "142.213.91.1:50051", 1)
-    buyer.search_item(item_name="Orange", item_category="ANY")
-    buyer.buy_item(item_id=1, quantity=5, buyer_address="142.213.91.1:50051")
-    buyer.add_to_wishlist(1, "142.213.91.1:50051")
+    BUYER_MARKET_PORT = "50051"
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    notifyBuyer_pb2_grpc.add_BuyerNotificationServicer_to_server(BuyerNotificationServicer(), server)
+
+    # Connecting to the market as a client
+    buyer = MarketBuyer('localhost:'+BUYER_MARKET_PORT)
+
+    # Initializing the buyer notification server
+    BUYER_NOTIFICATION_PORT = input("Enter the port number for running the Buyer Notification Server: ")
+    server.add_insecure_port('[::]:'+BUYER_NOTIFICATION_PORT)
+    server.start()
+
+    buyer_address = "localhost:"+BUYER_NOTIFICATION_PORT
+    
+    print("-------------------------------------------------")
+    print("        Welcome to the Buyer platform!!         ")
+    print("-------------------------------------------------")
+
+    while(True):
+        choice = mainMenu()
+
+        if choice == 1:
+            item_name = input("Enter the item name: ")
+            item_category = input("Enter the item category (ELECTRONICS, FASHION, OTHERS, ANY): ")
+            print('---------------------------------------------------')
+            buyer.search_item(item_name, item_category)
+
+        elif choice == 2:
+            item_id = int(input("Enter the item ID: "))
+            rating = int(input("Enter the rating (1-5): "))
+            print('---------------------------------------------------')
+            buyer.rate_item(item_id, buyer_address, rating)
+
+        elif choice == 3:
+            item_id = int(input("Enter the item ID: "))
+            quantity = int(input("Enter the quantity: "))
+            print('---------------------------------------------------')
+            buyer.buy_item(item_id, quantity, buyer_address)
+
+        elif choice == 4:
+            item_id = int(input("Enter the item ID: "))
+            print('---------------------------------------------------')
+            buyer.add_to_wishlist(item_id, buyer_address)
+
+        elif choice == 5:
+            break
+        else:
+            print("Invalid choice. Try again.")
+        
+        print("--------------------------------------------------")
+        print("--------------------Main Menu---------------------")
+        print("--------------------------------------------------")
+

@@ -124,27 +124,6 @@ message DisplaySellerItemsResponse {
   repeated ItemDetails items = 1;
 }
 
-
-// // Define the buyer service
-// service BuyerService {
-//   // Search for items
-//   rpc SearchItem (SearchItemRequest) returns (SearchItemResponse);
-
-//   // Buy an item
-//   rpc BuyItem (BuyItemRequest) returns (BuyItemResponse);
-
-//   // Add item to wishlist
-//   rpc AddToWishList (AddToWishListRequest) returns (AddToWishListResponse);
-
-//   // Rate an item
-//   rpc RateItem (RateItemRequest) returns (RateItemResponse);
-// }
-
-// // Define the common notification service
-// service NotifyClient {
-//   rpc SendNotification (NotificationRequest) returns (NotificationResponse);
-// }
-
 // Define request and response messages for buyer functionalities
 message SearchItemRequest {
   string itemName = 1;
@@ -217,16 +196,3 @@ message RateItemResponse {
   }
   Status status = 1;
 }
-
-// // Define request and response messages for notifications
-// message NotificationRequest {
-//   string updatedItemDetails = 1;
-// }
-
-// message NotificationResponse {
-//   enum Status {
-//     SUCCESS = 0;
-//     FAILED = 1;
-//   }
-//   Status status = 1;
-// }
