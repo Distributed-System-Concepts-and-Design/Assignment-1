@@ -19,31 +19,34 @@ class GroupServer:
         self.socket.bind(f"tcp://{self.ip_address}")
 
         self.register_group_with_message_server()
+        print(f"Group {group_name} started at {self.ip_address}")
 
     def register_group_with_message_server(self):
+        message_server_ip = "localhost:5555"
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
-            message_server_socket.connect("tcp://localhost:5555")  # Connect to message server
+            message_server_socket.connect(f'tcp://{message_server_ip}')  # Connect to message server
             message_server_socket.send_string(f"REGISTER_GROUP {self.ip_address} {self.group_name}")
             response = message_server_socket.recv_string()
             print(response)
         finally:
             if message_server_socket:
-                message_server_socket.disconnect("tcp://localhost:5555")
+                message_server_socket.disconnect(f'tcp://{message_server_ip}')
                 message_server_socket.close()
 
     def close_group(self):
+        message_server_ip = "localhost:5555"
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
-            message_server_socket.connect("tcp://localhost:5555")  # Connect to message server
+            message_server_socket.connect(f'tcp://{message_server_ip}')  # Connect to message server
             message_server_socket.send_string(f"DELETE_GROUP {self.ip_address} {self.group_name}")
             response = message_server_socket.recv_string()
             print(response)
         finally:
             if message_server_socket:
-                message_server_socket.disconnect("tcp://localhost:5555")
+                message_server_socket.disconnect(f'tcp://{message_server_ip}')
                 message_server_socket.close()
 
     def join_group(self, user_uuid):
@@ -67,7 +70,7 @@ class GroupServer:
 
     def get_messages(self, timestamp=None):
         if timestamp:
-            print(f"Fetching messages after {timestamp}")
+            # print(f"Fetching messages after {timestamp}")
             # COnvert the timestamp to datetime object\
             # timestamp = datetime.strptime(timestamp_, "%Y-%m-%d %H:%M:%S")
             filtered_messages = [msg for msg in self.messages if msg[0] >= timestamp]
@@ -121,23 +124,30 @@ class GroupServer:
                 uuid = args[0]
                 message_content = " ".join(args[1:])
             else:
+                print('FAIL: Missing arguments')
                 self.socket.send_string("FAIL: Missing arguments")
-            print(uuid, message_content)
+            # print(uuid, message_content)
             if uuid and message_content:
                 print(f"MESSAGE SEND FROM {uuid}")
                 response = self.send_message(uuid, message_content)
                 self.socket.send_string(response)
             else:
                 # Invalid command or missing arguments
+                # print(f"Invalid command: {message}")
                 self.socket.send_string("FAIL")
 
         else:
             # Invalid command
+            print(f'INVALID COMMAND: {message}')
             self.socket.send_string("INVALID COMMAND")
 
 def main():
     group_name = input("Enter group name: ")
-    group_ip = input("Enter group IP: ")
+    group_ip = input("Enter group IP {Press Enter for localhost}: ")
+    if not group_ip:
+        group_ip = "*"
+    group_port = input("Enter group port to bind: ")
+    group_ip = f"{group_ip}:{group_port}"
     group_server = GroupServer(group_name, group_ip)
 
     try:
@@ -145,7 +155,7 @@ def main():
             # Handle individual user requests
             message = group_server.socket.recv_string()
 
-            print(f"Received message: {message}")
+            # print(f"Received message: {message}")
 
             group_server.handle_user_request(message)
 
