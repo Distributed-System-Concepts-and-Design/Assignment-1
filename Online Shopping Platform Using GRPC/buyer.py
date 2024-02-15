@@ -93,20 +93,22 @@ class BuyerNotificationServicer(notifyBuyer_pb2_grpc.BuyerNotificationServicer):
         print(f"Rating: {request.rating}")
         print(f"Seller: {request.sellerAddress}")
         print("------------------------------------------\n")
-
+        mainMenu(takeChoice=False)
         return notifyBuyer_pb2.NotifyBuyerResponse(status=notifyBuyer_pb2.NotifyBuyerResponse.SUCCESS)
 
 
-def mainMenu():
+def mainMenu(takeChoice=True):
     print("\n1. Search Item")
     print("2. Rate Item")
     print("3. Buy Item")
     print("4. Add to Wishlist")
     print("5. Exit")
     print("-------------------------------------------------")
-    choice = int(input("Enter your choice: "))
-    print("-------------------------------------------------\n")
-    return choice
+    if takeChoice:
+        choice = int(input("Enter your choice: "))
+        print("-------------------------------------------------\n")
+        return choice
+    return None
 
 
 
@@ -114,52 +116,58 @@ if __name__ == "__main__":
     BUYER_MARKET_PORT = "50051"
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     notifyBuyer_pb2_grpc.add_BuyerNotificationServicer_to_server(BuyerNotificationServicer(), server)
+    try:
+        # Connecting to the market as a client
+        # buyer = MarketBuyer('34.28.67.70:'+BUYER_MARKET_PORT)
+        buyer = MarketBuyer('localhost:'+BUYER_MARKET_PORT)
 
-    # Connecting to the market as a client
-    buyer = MarketBuyer('localhost:'+BUYER_MARKET_PORT)
+        # Initializing the buyer notification server
+        BUYER_NOTIFICATION_PORT = input("Enter the port number for running the Buyer Notification Server: ")
+        server.add_insecure_port('[::]:'+BUYER_NOTIFICATION_PORT)
+        server.start()
 
-    # Initializing the buyer notification server
-    BUYER_NOTIFICATION_PORT = input("Enter the port number for running the Buyer Notification Server: ")
-    server.add_insecure_port('[::]:'+BUYER_NOTIFICATION_PORT)
-    server.start()
-
-    buyer_address = "localhost:"+BUYER_NOTIFICATION_PORT
-    
-    print("-------------------------------------------------")
-    print("        Welcome to the Buyer platform!!         ")
-    print("-------------------------------------------------")
-
-    while(True):
-        choice = mainMenu()
-
-        if choice == 1:
-            item_name = input("Enter the item name: ")
-            item_category = input("Enter the item category (ELECTRONICS, FASHION, OTHERS, ANY): ")
-            print('---------------------------------------------------')
-            buyer.search_item(item_name, item_category)
-
-        elif choice == 2:
-            item_id = int(input("Enter the item ID: "))
-            rating = int(input("Enter the rating (1-5): "))
-            print('---------------------------------------------------')
-            buyer.rate_item(item_id, buyer_address, rating)
-
-        elif choice == 3:
-            item_id = int(input("Enter the item ID: "))
-            quantity = int(input("Enter the quantity: "))
-            print('---------------------------------------------------')
-            buyer.buy_item(item_id, quantity, buyer_address)
-
-        elif choice == 4:
-            item_id = int(input("Enter the item ID: "))
-            print('---------------------------------------------------')
-            buyer.add_to_wishlist(item_id, buyer_address)
-
-        elif choice == 5:
-            break
-        else:
-            print("Invalid choice. Try again.")
+        # buyer_address = "103.28.253.123:"+BUYER_NOTIFICATION_PORT
+        buyer_address = "localhost:"+BUYER_NOTIFICATION_PORT
         
-        print("--------------------Main Menu---------------------")
-        print("--------------------------------------------------")
+        print("-------------------------------------------------")
+        print("        Welcome to the Buyer platform!!         ")
+        print("-------------------------------------------------")
+
+        while(True):
+            choice = mainMenu()
+
+            if choice == 1:
+                item_name = input("Enter the item name: ")
+                item_category = input("Enter the item category (ELECTRONICS, FASHION, OTHERS, ANY): ")
+                print('---------------------------------------------------')
+                buyer.search_item(item_name, item_category)
+
+            elif choice == 2:
+                item_id = int(input("Enter the item ID: "))
+                rating = int(input("Enter the rating (1-5): "))
+                print('---------------------------------------------------')
+                buyer.rate_item(item_id, buyer_address, rating)
+
+            elif choice == 3:
+                item_id = int(input("Enter the item ID: "))
+                quantity = int(input("Enter the quantity: "))
+                print('---------------------------------------------------')
+                buyer.buy_item(item_id, quantity, buyer_address)
+
+            elif choice == 4:
+                item_id = int(input("Enter the item ID: "))
+                print('---------------------------------------------------')
+                buyer.add_to_wishlist(item_id, buyer_address)
+
+            elif choice == 5:
+                break
+            else:
+                print("Invalid choice. Try again.")
+            
+            print("--------------------Main Menu---------------------")
+            print("--------------------------------------------------")
+    
+    except KeyboardInterrupt:
+        server.stop(0)
+        print("Buyer Has Quit the Platform. Bye!!")
 

@@ -109,12 +109,12 @@ class SellerNotificationServicer(notifySeller_pb2_grpc.SellerNotificationService
         print(f"Rating: {request.rating}")
         print(f"Seller: {request.sellerAddress}")
         print("--------------------------------------------------")
-
+        mainMenu(takeChoice=False)
         return notifySeller_pb2.NotifySellerResponse(status=notifySeller_pb2.NotifySellerResponse.SUCCESS)
 
 
 
-def mainMenu():
+def mainMenu(takeChoice=True):
     print("\n1. Register Seller")
     print("2. Sell Item")
     print("3. Update Item")
@@ -122,9 +122,11 @@ def mainMenu():
     print("5. Display Seller Items")
     print("6. Exit")
     print("-------------------------------------------------")
-    choice = int(input("Enter your choice: "))
-    print("-------------------------------------------------\n")
-    return choice
+    if takeChoice:
+        choice = int(input("Enter your choice: "))
+        print("-------------------------------------------------\n")
+        return choice
+    return None
 
 
 def get_random_port():
@@ -135,73 +137,80 @@ if __name__ == "__main__":
     SELLER_MARKET_PORT = '50051'
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     notifySeller_pb2_grpc.add_SellerNotificationServicer_to_server(SellerNotificationServicer(), server)
-    
-    # Connecting to the market as a client
-    seller = MarketSeller('localhost:'+SELLER_MARKET_PORT)
-    sellerAddress = None
-    sellerUUID = None
-    SELLER_NOTIFICATION_PORT = '50052'
+    try:
+        # Connecting to the market as a client
+        # seller = MarketSeller('34.28.67.70:'+SELLER_MARKET_PORT)
+        seller = MarketSeller('localhost:'+SELLER_MARKET_PORT)
+        sellerAddress = None
+        sellerUUID = None
+        SELLER_NOTIFICATION_PORT = '50052'
 
+        print("-------------------------------------------------")
+        print("        Welcome to the Seller platform!!         ")
+        print("-------------------------------------------------")
+        while True:
+            try:
+                choice = mainMenu()
+                if choice == 1:
+                    # Initializing the seller notification server
+                    SELLER_NOTIFICATION_PORT = input("Enter the port number for running the Seller Notification Server: ")
+                    # SELLER_NOTIFICATION_PORT = get_random_port()
+                    # sellerAddress = "103.28.253.123:"+SELLER_NOTIFICATION_PORT
+                    sellerAddress = "localhost:"+SELLER_NOTIFICATION_PORT
+                    sellerUUID = str(uuid.uuid1())
+                    
+                    server.add_insecure_port('[::]:'+SELLER_NOTIFICATION_PORT)
+                    server.start()
+                    
+                    seller.register_seller(sellerAddress, sellerUUID)
 
-    print("-------------------------------------------------")
-    print("        Welcome to the Seller platform!!         ")
-    print("-------------------------------------------------")
-    while True:
-        try:
-            choice = mainMenu()
-            if choice == 1:
-                # Initializing the seller notification server
-                SELLER_NOTIFICATION_PORT = input("Enter the port number for running the Seller Notification Server: ")
-                # SELLER_NOTIFICATION_PORT = get_random_port()
-                sellerAddress = "localhost:"+SELLER_NOTIFICATION_PORT
-                sellerUUID = str(uuid.uuid1())
-                
-                server.add_insecure_port('[::]:'+SELLER_NOTIFICATION_PORT)
-                server.start()
-                
-                seller.register_seller(sellerAddress, sellerUUID)
+                elif choice == 2:
+                    product_name = input("Enter product name: ")
+                    category = input("Enter category: ")
+                    quantity = int(input("Enter quantity: "))
+                    description = input("Enter description: ")
+                    price_per_unit = float(input("Enter price per unit: "))
+                    # product_name = "Orange Frooti"
+                    # category = "OTHERS"
+                    # quantity = 500
+                    # description = "This is Frooti, a mongo drink"
+                    # price_per_unit = 20
+                    seller.sell_item(product_name, category, quantity, description, sellerAddress, price_per_unit, seller_uuid=sellerUUID)
+                    print('---------------------------------------------------')
 
-            elif choice == 2:
-                product_name = input("Enter product name: ")
-                category = input("Enter category: ")
-                quantity = int(input("Enter quantity: "))
-                description = input("Enter description: ")
-                price_per_unit = float(input("Enter price per unit: "))
-                # product_name = "Orange Frooti"
-                # category = "OTHERS"
-                # quantity = 500
-                # description = "This is Frooti, a mongo drink"
-                # price_per_unit = 20
-                seller.sell_item(product_name, category, quantity, description, sellerAddress, price_per_unit, seller_uuid=sellerUUID)
-                print('---------------------------------------------------')
+                elif choice == 3:
+                    item_id = int(input("Enter item ID: "))
+                    new_price = float(input("Enter new price: "))
+                    new_quantity = int(input("Enter new quantity: "))
+                    # item_id = 1
+                    # new_price = 29
+                    # new_quantity = 99
+                    seller.update_item(item_id, new_price, new_quantity, seller_address=sellerAddress, seller_uuid=sellerUUID)
+                    print('---------------------------------------------------')
 
-            elif choice == 3:
-                item_id = int(input("Enter item ID: "))
-                new_price = float(input("Enter new price: "))
-                new_quantity = int(input("Enter new quantity: "))
-                # item_id = 1
-                # new_price = 29
-                # new_quantity = 99
-                seller.update_item(item_id, new_price, new_quantity, seller_address=sellerAddress, seller_uuid=sellerUUID)
-                print('---------------------------------------------------')
+                elif choice == 4:
+                    item_id = int(input("Enter item ID: "))
+                    # item_id = 1
+                    seller.delete_item(item_id, seller_address=sellerAddress, seller_uuid=sellerUUID)
+                    print('---------------------------------------------------')
 
-            elif choice == 4:
-                item_id = int(input("Enter item ID: "))
-                # item_id = 1
-                seller.delete_item(item_id, seller_address=sellerAddress, seller_uuid=sellerUUID)
-                print('---------------------------------------------------')
+                elif choice == 5:
+                    seller.display_seller_items(seller_address=sellerAddress, seller_uuid=sellerUUID)
+                    print('---------------------------------------------------')
 
-            elif choice == 5:
-                seller.display_seller_items(seller_address=sellerAddress, seller_uuid=sellerUUID)
-                print('---------------------------------------------------')
-
-            elif choice == 6:
+                elif choice == 6:
+                    break
+                else:
+                    print("Invalid choice")
+            
+                print("--------------------Main Menu---------------------")
+                print("--------------------------------------------------")
+            
+            except Exception as e:
+                print("Error:", e)
                 break
-            else:
-                print("Invalid choice")
-        
-            print("--------------------Main Menu---------------------")
-            print("--------------------------------------------------")
-        except Exception as e:
-            print("Error:", e)
-            break
+    
+    except KeyboardInterrupt:
+        server.stop(0)
+        print("Seller has quit the platform. Bye!!")
+        pass
