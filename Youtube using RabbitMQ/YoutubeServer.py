@@ -27,46 +27,55 @@ class YouTubeServer:
             self.channel.stop_consuming()
             self.connection.close()
             print('User Requests closed')
+        except Exception as e:
+            print(f'Error: {e}')
+            self.connection.close()
+            print('User Requests closed')
+
 
     def callback(self,ch, method, properties, body):
             # print(body.decode())
-            data = json.loads(body.decode(encoding='utf-8'))
+            try:
+                data = json.loads(body.decode(encoding='utf-8'))
 
-            youtuber = data["youtuber"]
-            # print(youtuber, type(youtuber))
-            msg = ""
+                youtuber = data["youtuber"]
+                # print(youtuber, type(youtuber))
+                msg = ""
 
-            if data["youtuber"] not in self.youtubers:
-                print("Youtuber not found")
-                msg = f"FAIL: Youtuber {data['youtuber']} not found"
+                if data["youtuber"] not in self.youtubers:
+                    print("Youtuber not found")
+                    msg = f"FAIL: Youtuber {data['youtuber']} not found"
 
-            elif data["subscribe"] == "True":
-                # print(data["user"] in self.userList)
-                if data["user"] not in self.userList:
-                    a=[]
-                    a.append(data["youtuber"])
-                    self.userList[data["user"]] = a                    
+                elif data["subscribe"] == "True":
+                    # print(data["user"] in self.userList)
+                    if data["user"] not in self.userList:
+                        a=[]
+                        a.append(data["youtuber"])
+                        self.userList[data["user"]] = a                    
+                    else:
+                        # print(data["youtuber"] in self.userList[data["user"]])
+                        if data["youtuber"] not in self.userList[data["user"]]:    
+                            self.userList[data["user"]].append(data["youtuber"])
+                    print(f'{data["user"]} is subscribed to {data["youtuber"]}')
+                    msg = 'SUCCESS: Subscribed'
                 else:
-                    # print(data["youtuber"] in self.userList[data["user"]])
-                    if data["youtuber"] not in self.userList[data["user"]]:    
-                        self.userList[data["user"]].append(data["youtuber"])
-                print(f'{data["user"]} is subscribed to {data["youtuber"]}')
-                msg = 'SUCCESS: Subscribed'
-            else:
-                if data["user"] in self.userList:
-                    if data["youtuber"] in self.userList[data["user"]]:
-                        self.userList[data["user"]].remove(data["youtuber"])
-                        print(f'{data["user"]} unsubscribed from {data["youtuber"]}')
-                        msg = 'SUCCESS: Unsubscribed'
-            # self.response_msg = msg
-            # print(self.response_msg)
+                    if data["user"] in self.userList:
+                        if data["youtuber"] in self.userList[data["user"]]:
+                            self.userList[data["user"]].remove(data["youtuber"])
+                            print(f'{data["user"]} unsubscribed from {data["youtuber"]}')
+                            msg = 'SUCCESS: Unsubscribed'
+                # self.response_msg = msg
+                # print(self.response_msg)
+            except Exception as e:
+                print(f'Error: {e}')
+                msg = "FAIL: Invalid request"
 
     def consume_youtuber_requests(self):
         def callback(ch, method, properties, body):
             youtuber = body.decode().split()[0]
             if youtuber not in self.youtubers:
                 self.youtubers.append(youtuber)
-            video_name = body.decode().split()[2]
+            video_name = ' '.join(body.decode().split()[2:])
             print(body.decode())
             self.notify_users(youtuber, video_name)
         try: 
@@ -74,6 +83,10 @@ class YouTubeServer:
             print('Waiting for Youtubers to upload videos. To exit press CTRL+C')
         except KeyboardInterrupt:
             self.channel.stop_consuming()
+            self.connection.close()
+            print('Youtuber Requests closed')
+        except Exception as e:
+            print(f'Error: {e}')
             self.connection.close()
             print('Youtuber Requests closed')
 
@@ -86,11 +99,16 @@ class YouTubeServer:
         # print(" [x] Sent notification:", message)
 
         # if user is subsricbed to youtuber, send notification
-        for user in self.userList:
-            if youtuber in self.userList[user]:
-                if user not in self.userNotifications.keys():
-                    self.userNotifications[user] = self.channel.queue_declare(queue=user+"queue")
-                self.channel.basic_publish(exchange='', routing_key=user+"queue", body=message)
+        try:
+            for user in self.userList:
+                if youtuber in self.userList[user]:
+                    if user not in self.userNotifications.keys():
+                        self.userNotifications[user] = self.channel.queue_declare(queue=user+"queue")
+                    self.channel.basic_publish(exchange='', routing_key=user+"queue", body=message)
+        except Exception as e:
+            print(f'Error: {e}')
+            self.connection.close()
+            print('User Notifications closed')
 
 
 if __name__ == '__main__':

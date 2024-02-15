@@ -18,8 +18,8 @@ class GroupServer:
         print(f"Group {group_name} started at {self.ip_address}")
 
     def register_group_with_message_server(self):
-        # message_server_ip = "localhost:5555"
         message_server_ip = "34.131.27.141:5555"  # External IP of the message server from Google Cloud
+        message_server_ip = "localhost:5555"
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
@@ -33,8 +33,8 @@ class GroupServer:
                 message_server_socket.close()
 
     def close_group(self):
-        # message_server_ip = "localhost:5555"
         message_server_ip = "34.131.124.126:5555"  # External IP of the message server from Google Cloud
+        message_server_ip = "localhost:5555"
         try:
             context = zmq.Context()
             message_server_socket = context.socket(zmq.REQ)
@@ -147,6 +147,9 @@ def main():
     group_port = input("Enter group port to bind: ")
     
     group_server = GroupServer(group_name, external_ip, group_port)
+
+    # set timeout to 1 second
+    # group_server.socket.setsockopt(zmq.RCVTIMEO, 1000)
 
     try:
         while True:
