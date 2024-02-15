@@ -163,15 +163,15 @@ if __name__ == "__main__":
 
             elif choice == 2:
                 product_name = input("Enter product name: ")
-                # category = input("Enter category: ")
-                # quantity = int(input("Enter quantity: "))
-                # description = input("Enter description: ")
-                # price_per_unit = float(input("Enter price per unit: "))
+                category = input("Enter category: ")
+                quantity = int(input("Enter quantity: "))
+                description = input("Enter description: ")
+                price_per_unit = float(input("Enter price per unit: "))
                 # product_name = "Orange Frooti"
-                category = "OTHERS"
-                quantity = 500
-                description = "This is Frooti, a mongo drink"
-                price_per_unit = 20
+                # category = "OTHERS"
+                # quantity = 500
+                # description = "This is Frooti, a mongo drink"
+                # price_per_unit = 20
                 seller.sell_item(product_name, category, quantity, description, sellerAddress, price_per_unit, seller_uuid=sellerUUID)
                 print('---------------------------------------------------')
 
