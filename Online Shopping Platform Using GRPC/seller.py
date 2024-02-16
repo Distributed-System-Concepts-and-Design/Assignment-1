@@ -140,7 +140,10 @@ if __name__ == "__main__":
     try:
         # Connecting to the market as a client
         # seller = MarketSeller('34.28.67.70:'+SELLER_MARKET_PORT)
-        seller = MarketSeller('localhost:'+SELLER_MARKET_PORT)
+        # seller = MarketSeller('localhost:'+SELLER_MARKET_PORT)
+        market_address = input("Enter the external IP address of the Market: ")
+        seller = MarketSeller(market_address+':'+SELLER_MARKET_PORT)
+        
         sellerAddress = None
         sellerUUID = None
         SELLER_NOTIFICATION_PORT = '50052'
@@ -154,9 +157,10 @@ if __name__ == "__main__":
                 if choice == 1:
                     # Initializing the seller notification server
                     SELLER_NOTIFICATION_PORT = input("Enter the port number for running the Seller Notification Server: ")
-                    # SELLER_NOTIFICATION_PORT = get_random_port()
                     # sellerAddress = "103.28.253.123:"+SELLER_NOTIFICATION_PORT
-                    sellerAddress = "localhost:"+SELLER_NOTIFICATION_PORT
+                    # sellerAddress = "localhost:"+SELLER_NOTIFICATION_PORT
+                    sellerAddress = input("Enter the external IP address of the Seller: ")
+                    sellerAddress = sellerAddress+':'+SELLER_NOTIFICATION_PORT
                     sellerUUID = str(uuid.uuid1())
                     
                     server.add_insecure_port('[::]:'+SELLER_NOTIFICATION_PORT)
@@ -210,7 +214,7 @@ if __name__ == "__main__":
                 print("Error:", e)
                 break
     
-    except KeyboardInterrupt:
+    except Exception as e:
         server.stop(0)
-        print("Seller has quit the platform. Bye!!")
+        print("Seller has quit the platform.")
         pass

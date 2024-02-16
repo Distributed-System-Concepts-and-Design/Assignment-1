@@ -119,7 +119,9 @@ if __name__ == "__main__":
     try:
         # Connecting to the market as a client
         # buyer = MarketBuyer('34.28.67.70:'+BUYER_MARKET_PORT)
-        buyer = MarketBuyer('localhost:'+BUYER_MARKET_PORT)
+        # buyer = MarketBuyer('localhost:'+BUYER_MARKET_PORT)
+        market_address = input("Enter the external IP address of the Market: ")
+        buyer = MarketBuyer(market_address+':'+BUYER_MARKET_PORT)
 
         # Initializing the buyer notification server
         BUYER_NOTIFICATION_PORT = input("Enter the port number for running the Buyer Notification Server: ")
@@ -127,10 +129,12 @@ if __name__ == "__main__":
         server.start()
 
         # buyer_address = "103.28.253.123:"+BUYER_NOTIFICATION_PORT
-        buyer_address = "localhost:"+BUYER_NOTIFICATION_PORT
+        # buyer_address = "localhost:"+BUYER_NOTIFICATION_PORT
+        buyer_address = input("Enter the external IP address of the Buyer: ")
+        buyer_address = buyer_address+':'+BUYER_NOTIFICATION_PORT
         
         print("-------------------------------------------------")
-        print("        Welcome to the Buyer platform!!         ")
+        print("         Welcome to the Buyer platform!!         ")
         print("-------------------------------------------------")
 
         while(True):
@@ -167,7 +171,7 @@ if __name__ == "__main__":
             print("--------------------Main Menu---------------------")
             print("--------------------------------------------------")
     
-    except KeyboardInterrupt:
+    except Exception as e:
         server.stop(0)
-        print("Buyer Has Quit the Platform. Bye!!")
+        print("Buyer Has Quit the Platform.")
 
