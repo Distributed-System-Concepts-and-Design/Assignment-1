@@ -2,26 +2,22 @@
 
 There are 3 mini-projects in this repository. Each of them is a distributed system and cloud computing project. Each of them are hosted and tested on Google Cloud. The details of each project are as follows:
 
-## e-Commerce MarketPlace *Using GRPC*
+## e-Commerce Shopping Platform *Using GRPC*
 
 ### Commands to compile and run the code:
 
-1) On Market Server: 
-    1. `python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. market.proto notifyBuyer.proto notifySeller.proto` *to compile the proto file for the market*
-    2. `python market.py` *to run the central market server*
-2) On Seller Machine: `python seller.py` *to run the seller server*
-3) On Buyer Machine: `python buyer.py` *to run the buyer server*
+1) For Compilation: `python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. market.proto notifyBuyer.proto notifySeller.proto`
+2) On Market Machine: `python market.py` *to run the central market server*
+3) On Seller Machine: `python seller.py` *to run the seller server*
+4) On Buyer Machine: `python buyer.py` *to run the buyer server*
 
 ### Assumptions:
-1) *ProductName+Category* is unique for each product
-2) `#` and `$` does not come in prdouctName or category
-3) Currently the market seller`s function as a single unique distributed system, i.e., buyer can buy a product but he doesn't from which seller the product is going to come. Hence, the ratings for a single product will be reflected in every seller's copy of the product too!
-4) New rating is taken as an average of the preceding rating which gives an approximate value of the actual mean of ratings. However, if a new seller comes with the same product which has been rated before then those ratings will not be reflected over here. This is a feature as the new seller should not be penalized (nor credited) on his products due to the already existing seller's ratings. This will ensure credibility and differentiability in product ratings too!
+1) The seller/buyer programs will not quit in between.
 
 ### Features:
 1) Market keeps track of all the products and their sellers
-2) Seller can add a product, remove a product, update a product, and get the ratings of a product
-3) Buyer can wishlist a product, buy a product, and rate a product
+2) Seller can add a product, remove a product, update a product, and get a list of all the products that he has listed
+3) Buyer can search for a product, wishlist a product, buy a product, and rate a product
 
 ## Group Messaging System on Cloud *Using ZeroMQ*
 
