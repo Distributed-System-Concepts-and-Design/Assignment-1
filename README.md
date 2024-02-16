@@ -1,6 +1,11 @@
 # Distributed Systems and Cloud Computing Assignments
 
-There are 3 mini-projects in this repository. Each of them is a distributed system and cloud computing project. Each of them are hosted and tested on Google Cloud. The details of each project are as follows:
+## Group Members:
+1) 2020002 - Aamleen Ahmed
+2) 2020312 - Mohammad Sufyan Azam
+3) 2020338 - Siddhant Singh
+
+There are 3 mini-projects in this repository. Each of them is a distributed system and cloud computing project. Each of them are hosted and tested on Google Cloud. The details of each project are given below.
 
 ## e-Commerce Shopping Platform *Using GRPC*
 
