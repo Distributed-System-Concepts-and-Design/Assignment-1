@@ -43,26 +43,37 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
             print("ERROR: Seller UUID does not match")
             return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
 
-        # make the key as prod_unique_id$sellerAddress
-        prod_unique_id = request.productName + "#" + str(request.category)
-        key = prod_unique_id + "$" + request.sellerAddress
+        # # make the key as prod_unique_id$sellerAddress
+        # prod_unique_id = request.productName + "#" + str(request.category)
+        # key = prod_unique_id + "$" + request.sellerAddress
         
-        # assign the item id according to the product name and category
-        if key in self.items:
-            print(f"ERROR: Item already present with seller {request.sellerAddress}")
-            return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
+        # # assign the item id according to the product name and category
+        # if key in self.items:
+        #     print(f"ERROR: Item already present with seller {request.sellerAddress}")
+        #     return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
         
-        # search if the product is already present by its prod_unique_id with another seller
-        for value in self.items.values():
-            if value["productName"] == request.productName and value["category"] == request.category:
-                itemID = value["itemID"]
-                break
-        else:
-            self.item_id = self.item_id + 1
-            itemID = self.item_id
+        # # search if the product is already present by its prod_unique_id with another seller
+        # for value in self.items.values():
+        #     if value["productName"] == request.productName and value["category"] == request.category:
+        #         itemID = value["itemID"]
+        #         break
+        # else:
+        #     self.item_id = self.item_id + 1
+        #     itemID = self.item_id
         
-        self.items[key] = {
-            "itemID": itemID,
+        # self.items[key] = {
+        #     "itemID": itemID,
+        #     "productName": request.productName,
+        #     "category": request.category,
+        #     "quantity": request.quantity,
+        #     "description": request.description,
+        #     "sellerAddress": request.sellerAddress,
+        #     "pricePerUnit": request.pricePerUnit,
+        #     "rating": 0  # Placeholder for rating
+        # }
+        
+        # Add item to inventory
+        seller_item = {
             "productName": request.productName,
             "category": request.category,
             "quantity": request.quantity,
@@ -71,6 +82,13 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
             "pricePerUnit": request.pricePerUnit,
             "rating": 0  # Placeholder for rating
         }
+        # A seller can not sell the same item twice    
+        if seller_item in self.items.values():
+            print(f"ERROR: Item already present with seller {request.sellerAddress}")
+            return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
+        
+        self.item_id = self.item_id + 1
+        self.items[self.item_id] = seller_item
         
         return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.SUCCESS, itemId=self.item_id)
 
@@ -82,20 +100,28 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
             print("ERROR: Seller not registered")
             return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
         
-        # make a reverse lookup dictionary for itemID, key
-        itemID_to_key = {}
-        for key, value in self.items.items():
-            # if itemID is present then add the seller address to the key
-            if value["itemID"] in itemID_to_key:
-                itemID_to_key[value["itemID"]].append(key)
-            else:
-                itemID_to_key[value["itemID"]] = [key]
+        # # make a reverse lookup dictionary for itemID, key
+        # itemID_to_key = {}
+        # for key, value in self.items.items():
+        #     # if itemID is present then add the seller address to the key
+        #     if value["itemID"] in itemID_to_key:
+        #         itemID_to_key[value["itemID"]].append(key)
+        #     else:
+        #         itemID_to_key[value["itemID"]] = [key]
         
-        if request.itemId not in itemID_to_key.keys():
+        # if request.itemId not in itemID_to_key.keys():
+        #     print("ERROR: Item not found")
+        #     return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
+        
+        # if request.sellerAddress not in [seller.split('$')[1] for seller in itemID_to_key[request.itemId]]:
+        #     print(f"ERROR: Seller {request.sellerAddress} does not own the item")
+        #     return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
+        
+        if (request.itemId not in self.items):
             print("ERROR: Item not found")
             return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
         
-        if request.sellerAddress not in [seller.split('$')[1] for seller in itemID_to_key[request.itemId]]:
+        if (self.items[request.itemId]["sellerAddress"] != request.sellerAddress):
             print(f"ERROR: Seller {request.sellerAddress} does not own the item")
             return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
         
@@ -111,22 +137,28 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
             print("ERROR: Price can not be negative")
             return market_pb2.UpdateItemResponse(status=market_pb2.UpdateItemResponse.FAILED)
         
-        # iterate over reverse lookup dictionary and update the item details
-        product = {}
-        for key in itemID_to_key[request.itemId]:
-            # find the right key and update the details
-            currentSeller = key.split('$')[1]
-            if currentSeller == request.sellerAddress:
-                self.items[key]["pricePerUnit"] = request.newPrice
-                self.items[key]["quantity"] = request.newQuantity
-                product = self.items[key]
-                break
+        # # iterate over reverse lookup dictionary and update the item details
+        # product = {}
+        # for key in itemID_to_key[request.itemId]:
+        #     # find the right key and update the details
+        #     currentSeller = key.split('$')[1]
+        #     if currentSeller == request.sellerAddress:
+        #         self.items[key]["pricePerUnit"] = request.newPrice
+        #         self.items[key]["quantity"] = request.newQuantity
+        #         product = self.items[key]
+        #         break
+        
+        # Update item details
+        self.items[request.itemId]["pricePerUnit"] = request.newPrice
+        self.items[request.itemId]["quantity"] = request.newQuantity
 
         
         # Get the buyerAddress from wishlist who has this product and notify them
         for buyerAddress, wishlist in self.wishlist.items():
             if request.itemId in wishlist:
-                print(f"Buyer {buyerAddress} has itemID={wishlist} in wishlist")
+                # print(f"Buyer {buyerAddress} has itemID={wishlist} in wishlist")
+                product = self.items[request.itemId]
+                product["itemID"] = request.itemId
                 notify_thread = threading.Thread(target=self.notifyBuyer, args=(buyerAddress, product))
                 notify_thread.start()
 
@@ -141,31 +173,41 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
             print("ERROR: Seller not registered")
             return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
         
-        # make a reverse lookup dictionary for itemID, key
-        itemID_to_key = {}
-        for key, value in self.items.items():
-            if value["itemID"] in itemID_to_key:
-                itemID_to_key[value["itemID"]].append(key)
-            else:
-                itemID_to_key[value["itemID"]] = [key]
+        # # make a reverse lookup dictionary for itemID, key
+        # itemID_to_key = {}
+        # for key, value in self.items.items():
+        #     if value["itemID"] in itemID_to_key:
+        #         itemID_to_key[value["itemID"]].append(key)
+        #     else:
+        #         itemID_to_key[value["itemID"]] = [key]
         
-        if request.itemId not in itemID_to_key.keys():
+        # if request.itemId not in itemID_to_key.keys():
+        #     print("ERROR: Item not found")
+        #     return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
+
+        # if request.sellerAddress not in [seller.split('$')[1] for seller in itemID_to_key[request.itemId]]:
+        #     print(f"ERROR: Seller {request.sellerAddress} does not own the item")
+        #     return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
+
+        if request.itemId not in self.items.keys():
             print("ERROR: Item not found")
             return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
-
-        if request.sellerAddress not in [seller.split('$')[1] for seller in itemID_to_key[request.itemId]]:
+        
+        if self.items[request.itemId]["sellerAddress"] != request.sellerAddress:
             print(f"ERROR: Seller {request.sellerAddress} does not own the item")
             return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
-
+        
         if request.sellerUUID != self.sellers[request.sellerAddress]:
             print("ERROR: Seller UUID does not match")
             return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.FAILED)
         
-        # Remove item from inventory
-        for key in itemID_to_key[request.itemId]:
-            if key.split('$')[1] == request.sellerAddress:
-                del self.items[key]
-                break
+        # # Remove item from inventory
+        # for key in itemID_to_key[request.itemId]:
+        #     if key.split('$')[1] == request.sellerAddress:
+        #         del self.items[key]
+        #         break
+
+        del self.items[request.itemId]
         return market_pb2.DeleteItemResponse(status=market_pb2.DeleteItemResponse.SUCCESS)
 
 
@@ -179,18 +221,33 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
             print("ERROR: Seller UUID does not match")
             return market_pb2.SellItemResponse(status=market_pb2.SellItemResponse.FAILED)
 
+        # response = market_pb2.DisplaySellerItemsResponse()
+        # for value in self.items.values():
+        #     if value["sellerAddress"] == request.sellerAddress:
+        #         item = response.items.add()
+        #         item.itemId = value["itemID"]
+        #         item.productName = value["productName"]
+        #         item.price = value["pricePerUnit"]
+        #         item.category = value["category"]
+        #         item.description = value["description"]
+        #         item.quantityRemaining = value["quantity"]
+        #         item.sellerAddress = value["sellerAddress"]
+        #         item.rating = value["rating"]
+        # return response
+        
         response = market_pb2.DisplaySellerItemsResponse()
-        for value in self.items.values():
-            if value["sellerAddress"] == request.sellerAddress:
+        for item_id, item_details in self.items.items():
+            if item_details["sellerAddress"] == request.sellerAddress:
                 item = response.items.add()
-                item.itemId = value["itemID"]
-                item.productName = value["productName"]
-                item.price = value["pricePerUnit"]
-                item.category = value["category"]
-                item.description = value["description"]
-                item.quantityRemaining = value["quantity"]
-                item.sellerAddress = value["sellerAddress"]
-                item.rating = value["rating"]
+                item.itemId = item_id
+                item.productName = item_details["productName"]
+                item.price = item_details["pricePerUnit"]
+                item.category = item_details["category"]
+                item.description = item_details["description"]
+                item.quantityRemaining = item_details["quantity"]
+                item.sellerAddress = item_details["sellerAddress"]
+                item.rating = item_details["rating"]
+        
         return response
 
 
@@ -200,18 +257,31 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
 
         response = market_pb2.SearchItemResponse()
 
-        for value in self.items.values():
-            if (request.itemName == "") or (request.itemName.lower().strip() in value["productName"].lower().strip()):
-                if (request.itemCategory == 3) or (request.itemCategory == value["category"]):
+        # for value in self.items.values():
+        #     if (request.itemName == "") or (request.itemName.lower().strip() in value["productName"].lower().strip()):
+        #         if (request.itemCategory == 3) or (request.itemCategory == value["category"]):
+        #             item = response.items.add()
+        #             item.itemId = value["itemID"]
+        #             item.productName = value["productName"]
+        #             item.price = value["pricePerUnit"]
+        #             item.category = value["category"]
+        #             item.description = value["description"]
+        #             item.quantityRemaining = value["quantity"]
+        #             item.sellerAddress = value["sellerAddress"]
+        #             item.rating = value["rating"]
+
+        for item_id, item_details in self.items.items():
+            if (request.itemName == "") or (request.itemName.lower().strip() in item_details["productName"].lower().strip()):
+                if (request.itemCategory == 3) or (request.itemCategory == item_details["category"]):
                     item = response.items.add()
-                    item.itemId = value["itemID"]
-                    item.productName = value["productName"]
-                    item.price = value["pricePerUnit"]
-                    item.category = value["category"]
-                    item.description = value["description"]
-                    item.quantityRemaining = value["quantity"]
-                    item.sellerAddress = value["sellerAddress"]
-                    item.rating = value["rating"]
+                    item.itemId = item_id
+                    item.productName = item_details["productName"]
+                    item.price = item_details["pricePerUnit"]
+                    item.category = item_details["category"]
+                    item.description = item_details["description"]
+                    item.quantityRemaining = item_details["quantity"]
+                    item.rating = item_details["rating"]
+                    item.sellerAddress = item_details["sellerAddress"]
 
         return response
 
@@ -219,49 +289,69 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
     def BuyItem(self, request, context):
         print(f"Buy request {request.quantity} of item {request.itemId}, from {request.buyerAddress}")
         
-        # make a reverse lookup dictionary for itemID, key
-        itemID_to_key = {}
-        for key, value in self.items.items():
-            if value["itemID"] in itemID_to_key:
-                itemID_to_key[value["itemID"]].append(key)
-            else:
-                itemID_to_key[value["itemID"]] = [key]
+        # # make a reverse lookup dictionary for itemID, key
+        # itemID_to_key = {}
+        # for key, value in self.items.items():
+        #     if value["itemID"] in itemID_to_key:
+        #         itemID_to_key[value["itemID"]].append(key)
+        #     else:
+        #         itemID_to_key[value["itemID"]] = [key]
         
-        if request.itemId not in itemID_to_key.keys():
+        # if request.itemId not in itemID_to_key.keys():
+        #     print(f"ERROR: Item {request.itemId} not found")
+        #     return market_pb2.BuyItemResponse(status=market_pb2.BuyItemResponse.FAILED)
+        
+        # # calculate total quantity of the item
+        # total_quantity = 0
+        # for key in itemID_to_key[request.itemId]:
+        #     total_quantity += self.items[key]["quantity"]
+        
+        # if request.quantity > total_quantity:
+        #     print(f"ERROR: Insufficient quantity of item {request.itemId}")
+        #     return market_pb2.BuyItemResponse(status=market_pb2.BuyItemResponse.FAILED)
+
+
+        # # Update item quantity
+        # for key in itemID_to_key[request.itemId]:
+        #     if self.items[key]["quantity"] >= request.quantity:
+        #         self.items[key]["quantity"] -= request.quantity
+        #         notify_thread = threading.Thread(target=self.notifySeller, args=(self.items[key]["sellerAddress"], self.items[key]))
+        #         notify_thread.start()
+        #         break
+        #     else:
+        #         request.quantity -= self.items[key]["quantity"]
+        #         self.items[key]["quantity"] = 0
+        #         notify_thread = threading.Thread(target=self.notifySeller, args=(self.items[key]["sellerAddress"], self.items[key]))
+        #         notify_thread.start()
+
+        if request.itemId not in self.items:
             print(f"ERROR: Item {request.itemId} not found")
             return market_pb2.BuyItemResponse(status=market_pb2.BuyItemResponse.FAILED)
         
-        # calculate total quantity of the item
-        total_quantity = 0
-        for key in itemID_to_key[request.itemId]:
-            total_quantity += self.items[key]["quantity"]
-        
-        if request.quantity > total_quantity:
+        if request.quantity > self.items[request.itemId]["quantity"]:
             print(f"ERROR: Insufficient quantity of item {request.itemId}")
             return market_pb2.BuyItemResponse(status=market_pb2.BuyItemResponse.FAILED)
-
-
-        # Update item quantity
-        for key in itemID_to_key[request.itemId]:
-            if self.items[key]["quantity"] >= request.quantity:
-                self.items[key]["quantity"] -= request.quantity
-                notify_thread = threading.Thread(target=self.notifySeller, args=(self.items[key]["sellerAddress"], self.items[key]))
-                notify_thread.start()
-                break
-            else:
-                request.quantity -= self.items[key]["quantity"]
-                self.items[key]["quantity"] = 0
-                notify_thread = threading.Thread(target=self.notifySeller, args=(self.items[key]["sellerAddress"], self.items[key]))
-                notify_thread.start()
         
+       
+        # Update item quantity
+        self.items[request.itemId]["quantity"] -= request.quantity
+        product = self.items[request.itemId]
+        product["itemID"] = request.itemId
+        notify_thread = threading.Thread(target=self.notifySeller, args=(self.items[request.itemId]["sellerAddress"], product))
+        notify_thread.start()
+        
+
         return market_pb2.BuyItemResponse(status=market_pb2.BuyItemResponse.SUCCESS)
 
 
     def AddToWishList(self, request, context):
         print(f"Wishlist request of item {request.itemId}, from {request.buyerAddress}")
 
-        all_itemIDs = {value["itemID"] : True for value in self.items.values()}
-        if request.itemId not in all_itemIDs.keys():
+        # all_itemIDs = {value["itemID"] : True for value in self.items.values()}
+        # if request.itemId not in all_itemIDs.keys():
+        #     print(f"ERROR: Item {request.itemId} not found")
+        #     return market_pb2.AddToWishListResponse(status=market_pb2.AddToWishListResponse.FAILED)
+        if request.itemId not in self.items:
             print(f"ERROR: Item {request.itemId} not found")
             return market_pb2.AddToWishListResponse(status=market_pb2.AddToWishListResponse.FAILED)
         
@@ -281,16 +371,19 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
     def RateItem(self, request, context):
         print(f"{request.buyerAddress} rated item {request.itemId} with {request.rating} stars.")
         
-        # make a reverse lookup dictionary for itemID, key
-        itemID_to_key = {}
-        for key, value in self.items.items():
-            if value["itemID"] in itemID_to_key:
-                itemID_to_key[value["itemID"]].append(key)
-            else:
-                itemID_to_key[value["itemID"]] = [key]
+        # # make a reverse lookup dictionary for itemID, key
+        # itemID_to_key = {}
+        # for key, value in self.items.items():
+        #     if value["itemID"] in itemID_to_key:
+        #         itemID_to_key[value["itemID"]].append(key)
+        #     else:
+        #         itemID_to_key[value["itemID"]] = [key]
         
-        if request.itemId not in itemID_to_key.keys():
-            print(f"ERROR: Item {request.itemId} not found")
+        # if request.itemId not in itemID_to_key.keys():
+        #     print(f"ERROR: Item {request.itemId} not found")
+        #     return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.FAILED)
+
+        if request.itemId not in self.items:
             return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.FAILED)
         
         # buyerRating is of the form {buyerAddress : [itemID1, itemID2, ...]}
@@ -303,12 +396,20 @@ class MarketServicer(market_pb2_grpc.SellerServiceServicer):
         else:
             self.buyerRating[request.buyerAddress] = [request.itemId]
 
+        # # Update item rating
+        # for key in itemID_to_key[request.itemId]:
+        #     if self.items[key]["rating"] == 0:
+        #         self.items[key]["rating"] = request.rating
+        #     else:
+        #         self.items[key]["rating"] = (self.items[key]["rating"] + request.rating) / 2
+        
         # Update item rating
-        for key in itemID_to_key[request.itemId]:
-            if self.items[key]["rating"] == 0:
-                self.items[key]["rating"] = request.rating
-            else:
-                self.items[key]["rating"] = (self.items[key]["rating"] + request.rating) / 2
+        total_buyers = 0
+        for items in self.buyerRating.values():
+            if request.itemId in items:
+                total_buyers += 1
+        
+        self.items[request.itemId]["rating"] = (self.items[request.itemId]["rating"] * (total_buyers - 1) + request.rating) / total_buyers
 
         return market_pb2.RateItemResponse(status=market_pb2.RateItemResponse.SUCCESS)
     
