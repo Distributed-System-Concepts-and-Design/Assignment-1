@@ -5,13 +5,15 @@ There are 3 mini-projects in this repository. Each of them is a distributed syst
 ## e-Commerce MarketPlace *Using GRPC*
 
 ### Commands to compile and run the code:
-1) python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. market_seller.proto
-2) `python market.py` *to run the central market server*
-3) `python seller.py` *to run the seller server*
-4) `python buyer.py` *to run the buyer server*
+
+1) On Market Server: 
+    1. `python -m grpc_tools.protoc -I . --python_out=. --grpc_python_out=. market.proto notifyBuyer.proto notifySeller.proto` *to compile the proto file for the market*
+    2. `python market.py` *to run the central market server*
+2) On Seller Machine: `python seller.py` *to run the seller server*
+3) On Buyer Machine: `python buyer.py` *to run the buyer server*
 
 ### Assumptions:
-1) ProductName+Category is unique for each product
+1) *ProductName+Category* is unique for each product
 2) `#` and `$` does not come in prdouctName or category
 3) Currently the market seller`s function as a single unique distributed system, i.e., buyer can buy a product but he doesn't from which seller the product is going to come. Hence, the ratings for a single product will be reflected in every seller's copy of the product too!
 4) New rating is taken as an average of the preceding rating which gives an approximate value of the actual mean of ratings. However, if a new seller comes with the same product which has been rated before then those ratings will not be reflected over here. This is a feature as the new seller should not be penalized (nor credited) on his products due to the already existing seller's ratings. This will ensure credibility and differentiability in product ratings too!
@@ -25,12 +27,12 @@ There are 3 mini-projects in this repository. Each of them is a distributed syst
 
 ### Commands to compile and run the code:
 1) pip install pyzmq
-2) `python message_server.py` *to run the central server*
-3) `python groups.py` *to run the individual group servers*
-    a. Enter the group name, external IP, and port number of the server
-4) `python client.py` *to run the client*
-    a. Enter the user name, phone number and port number of the user side.
-    b. Commands to perform any action will be: ACTION <message *if any* > @group_name *Case-Sensitive*. For example: `JOIN @group 1`, `LEAVE @group 1`, `SEND_MESSAGE Hello How are you @group1`, `GET_MESSAGES <timestamp> @group1`
+2) `python message_server.py` *to run the central server* where Central Server is hosted
+3) `python groups.py` *to run the individual group servers* where Group Server is hosted
+    1. Enter the group name, external IP, and port number of the server
+4) `python client.py` *to run the client* where User is hosted
+    1. Enter the user name, phone number and port number of the user side.
+    2. Commands to perform any action will be: ACTION <message *if any* > @group_name *Case-Sensitive*. For example: `JOIN @group 1`, `LEAVE @group 1`, `SEND_MESSAGE Hello How are you @group1`, `GET_MESSAGES <timestamp> @group1`
 
 ### Assumptions:
 1) The combination of group name and IP is unique
@@ -50,10 +52,10 @@ There are 3 mini-projects in this repository. Each of them is a distributed syst
 0) Update the external IP in the `Youtube.py` and `User.py` file in line 8 and 6, respectively. Give the external IP where `YoutubeServer.py` is hosted. 
 1) `pip install pika`
 2) Run `rmq_setup.sh` to setup the RabbitMQ server
-3) `python YoutubeServer.py` *to run the central server*
-4) `python Youtube.py *youtuber_name* *Video name*` *to make the youtuber upload a video*
-5) `python User.py user_name` *to login the user*
-6) `python User.py user_name <s/u> <youtuber_name>` *to subscribe or unsubscribe to a youtuber*
+3) `python YoutubeServer.py` *to run the central server* where Central Server is hosted
+4) `python Youtube.py *youtuber_name* *Video name*` *to make the youtuber upload a video* where Youtuber is hosted
+5) `python User.py user_name` *to login the user* where User is hosted
+6) `python User.py user_name <s/u> <youtuber_name>` *to subscribe or unsubscribe to a youtuber* where User is hosted
 
 ### Assumptions:
 1) The youtuber will have to upload atleast one video to exist and be subscribed to
